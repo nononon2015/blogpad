@@ -16,7 +16,8 @@ body { margin: 0; color: var(--ink); background: var(--canvas); font-family: -ap
 button, input, textarea, select { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 
-.app-shell { min-height: 100dvh; padding-bottom: 98px; }
+.app-shell { min-height: 100dvh; }
+.editor-screen { padding-bottom: 98px; }
 .topbar { position: sticky; top: 0; z-index: 20; height: 66px; display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 18px 0; background: color-mix(in srgb, var(--canvas) 92%, transparent); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(65, 57, 42, .09); }
 .brand { display: flex; align-items: center; gap: 10px; font-family: Georgia, "Songti SC", serif; font-weight: 700; font-size: 21px; letter-spacing: -.3px; }
 .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px 10px 10px 3px; color: #fff9ef; background: var(--accent); font-family: Georgia, serif; font-size: 19px; box-shadow: 0 4px 12px rgba(168,61,29,.2); }
@@ -25,6 +26,41 @@ button { -webkit-tap-highlight-color: transparent; }
 .icon-button, .close-button { border: 0; background: transparent; color: var(--ink); cursor: pointer; }
 .icon-button { width: 44px; height: 44px; border-radius: 50%; font-size: 20px; }
 .icon-button:active { background: #e8e1d4; }
+.back-button { width: 44px; height: 44px; margin-left: -7px; border: 0; border-radius: 50%; color: var(--ink); background: transparent; font-family: Georgia, serif; font-size: 42px; font-weight: 300; line-height: 1; cursor: pointer; }
+.back-button:active { background: #e8e1d4; }
+.editor-heading { position: absolute; left: 50%; transform: translateX(-50%); font-family: Georgia, "Songti SC", serif; font-size: 17px; }
+.connection-pill { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 99px; color: #5c574e; background: rgba(255,253,248,.78); font-size: 12px; font-weight: 700; cursor: pointer; }
+.connection-dot { width: 7px; height: 7px; border-radius: 50%; background: #b5aea1; }
+.connection-pill.connected .connection-dot { background: #4e9c67; box-shadow: 0 0 0 3px rgba(78,156,103,.13); }
+
+.post-list-page { width: min(760px, 100%); margin: 0 auto; padding: 32px 16px calc(112px + env(safe-area-inset-bottom)); }
+.list-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 0 3px 22px; }
+.list-heading h1 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(34px, 9vw, 48px); line-height: 1.05; letter-spacing: -.7px; }
+.post-count { padding: 7px 10px; border-radius: 99px; color: var(--muted); background: #e9e2d6; font-size: 12px; }
+.post-list { display: grid; gap: 11px; }
+.post-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 128px; padding: 20px; border: 1px solid rgba(105,92,69,.13); border-radius: 17px; background: var(--paper); box-shadow: 0 8px 24px rgba(52,42,22,.055); }
+.post-card-main { min-width: 0; }
+.post-meta { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; color: var(--muted); font-size: 11px; }
+.status-badge { padding: 4px 7px; border-radius: 99px; color: #3e7650; background: #e4f1e8; font-weight: 750; }
+.status-badge.draft { color: #8a6431; background: #f3ead8; }
+.post-card h2 { margin: 0; overflow: hidden; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 22px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.post-card > a { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--accent-dark); background: #f1e8dc; text-decoration: none; font-size: 20px; }
+.card-labels { display: flex; gap: 6px; margin-top: 11px; overflow: hidden; }
+.card-labels span { flex: 0 0 auto; color: #82796b; font-size: 11px; }
+.card-labels span::before { content: "#"; color: #b7ac9a; }
+.empty-state { display: grid; place-items: center; min-height: 52dvh; padding: 36px 24px; text-align: center; }
+.empty-paper { position: relative; display: grid; place-items: center; width: 88px; height: 106px; margin-bottom: 24px; border: 1px solid #d9d0c1; border-radius: 7px 7px 18px 7px; color: var(--accent); background: var(--paper); box-shadow: 10px 11px 0 #e3dbce; font-family: Georgia, "Songti SC", serif; font-size: 34px; }
+.empty-paper::after { position: absolute; right: 15px; bottom: 19px; width: 35px; height: 2px; background: #ddd3c4; box-shadow: 0 9px 0 #ddd3c4; content: ""; }
+.empty-state h2 { margin: 0 0 10px; font-family: Georgia, "Songti SC", serif; font-size: 25px; }
+.empty-state p { max-width: 300px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.65; }
+.inline-connect { min-height: 44px; margin-top: 20px; padding: 0 18px; border: 1px solid var(--line); border-radius: 12px; color: var(--accent-dark); background: var(--paper); font-weight: 750; }
+.draft-banner { display: grid; grid-template-columns: 1fr auto; width: 100%; margin-top: 14px; padding: 16px 18px; border: 1px dashed #cdbfa9; border-radius: 15px; color: var(--ink); background: rgba(255,253,248,.62); text-align: left; cursor: pointer; }
+.draft-banner span { grid-column: 1 / -1; margin-bottom: 4px; color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+.draft-banner strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.draft-banner b { color: var(--accent-dark); font-size: 13px; }
+.compose-fab { position: fixed; right: max(20px, calc((100vw - 720px)/2)); bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 24; display: grid; place-items: center; width: 66px; height: 66px; border: 0; border-radius: 50% 50% 50% 18px; color: #fff9ef; background: var(--accent); box-shadow: 0 13px 30px rgba(168,61,29,.32); cursor: pointer; }
+.compose-fab span { transform: rotate(-7deg); font-family: Georgia, serif; font-size: 34px; line-height: 1; }
+.compose-fab:active { transform: scale(.96); background: var(--accent-dark); }
 
 .workspace { width: min(820px, 100%); margin: 0 auto; padding: 18px 14px 30px; }
 .segmented { display: grid; grid-template-columns: 1fr 1fr; width: 184px; margin: 0 auto 18px; padding: 3px; border-radius: 12px; background: #e6dfd2; }
