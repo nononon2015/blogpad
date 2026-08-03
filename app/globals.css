@@ -59,7 +59,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .draft-banner strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .draft-banner b { color: var(--accent-dark); font-size: 13px; }
 .compose-fab { position: fixed; right: max(20px, calc((100vw - 720px)/2)); bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 24; display: grid; place-items: center; width: 66px; height: 66px; border: 0; border-radius: 50% 50% 50% 18px; color: #fff9ef; background: var(--accent); box-shadow: 0 13px 30px rgba(168,61,29,.32); cursor: pointer; }
-.compose-fab span { transform: rotate(-7deg); font-family: Georgia, serif; font-size: 34px; line-height: 1; }
+.compose-fab span { transform: scaleX(-1) rotate(-7deg); font-family: Georgia, serif; font-size: 34px; line-height: 1; }
 .compose-fab:active { transform: scale(.96); background: var(--accent-dark); }
 
 .workspace { width: min(820px, 100%); margin: 0 auto; padding: 18px 14px 30px; }
