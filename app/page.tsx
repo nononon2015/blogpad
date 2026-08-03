@@ -33,6 +33,7 @@ declare global {
 const DRAFT_KEY = "blogpad-draft-v1";
 const CONFIG_KEY = "blogpad-config-v1";
 const POSTS_KEY = "blogpad-posts-v1";
+const MEMORIES_KEY_PREFIX = "blogpad-on-this-day-v1-";
 
 export default function Home() {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -55,6 +56,7 @@ export default function Home() {
   const [uploadPreset, setUploadPreset] = useState("");
   const [connected, setConnected] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [onThisDayPosts, setOnThisDayPosts] = useState<Record<number, Post[]>>({});
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState("");
@@ -77,6 +79,10 @@ export default function Home() {
       setBlogUrl(data.blogUrl || "");
       setCloudName(data.cloudName || "");
       setUploadPreset(data.uploadPreset || "");
+      if (data.blogId) {
+        const cachedMemories = localStorage.getItem(`${MEMORIES_KEY_PREFIX}${data.blogId}`);
+        if (cachedMemories) setOnThisDayPosts(JSON.parse(cachedMemories));
+      }
     }
     if (cachedPosts) setPosts(JSON.parse(cachedPosts));
   }, []);
@@ -133,6 +139,36 @@ export default function Home() {
     cachePosts(remotePosts);
   }
 
+  async function loadOnThisDay(accessToken: string, selectedBlogId: string) {
+    if (!selectedBlogId) return;
+    const today = new Date();
+    const month = today.getMonth();
+    const day = today.getDate();
+    const years = Array.from({ length: 5 }, (_, index) => today.getFullYear() - index - 1);
+    const entries = await Promise.all(years.map(async (year) => {
+      const start = new Date(year, month, day);
+      if (start.getMonth() !== month || start.getDate() !== day) return [year, []] as const;
+      const end = new Date(year, month, day + 1);
+      const params = new URLSearchParams({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        fetchBodies: "false",
+        maxResults: "20",
+        orderBy: "published",
+        status: "live",
+      });
+      const response = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${selectedBlogId}/posts?${params}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) return [year, []] as const;
+      const data = await response.json();
+      return [year, (data.items || []).map((post: Post) => ({ ...post, status: "live" as const }))] as const;
+    }));
+    const memories = Object.fromEntries(entries) as Record<number, Post[]>;
+    setOnThisDayPosts(memories);
+    localStorage.setItem(`${MEMORIES_KEY_PREFIX}${selectedBlogId}`, JSON.stringify(memories));
+  }
+
   async function loadBlogs(accessToken: string) {
     const response = await fetch("https://www.googleapis.com/blogger/v3/users/self/blogs", {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -147,7 +183,7 @@ export default function Home() {
     setBlogUrl(selectedBlog?.url || "");
     setConnected(true);
     saveConfig({ blogId: selectedBlogId, blogUrl: selectedBlog?.url || "" });
-    await loadPosts(accessToken, selectedBlogId);
+    await Promise.all([loadPosts(accessToken, selectedBlogId), loadOnThisDay(accessToken, selectedBlogId)]);
     setNotice(`已连接，并同步 ${nextBlogs.length > 0 ? "文章列表" : "博客"}。`);
   }
 
@@ -362,6 +398,8 @@ export default function Home() {
 
   const plainText = content.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").trim();
   const wordCount = plainText.replace(/\s/g, "").length;
+  const today = new Date();
+  const anniversaryYears = Array.from({ length: 5 }, (_, index) => today.getFullYear() - index - 1);
 
   return (
     <main className={`app-shell ${screen === "list" ? "list-screen" : "editor-screen"}`}>
@@ -374,7 +412,7 @@ export default function Home() {
         {screen === "editor" && <strong className="editor-heading">{editingPostId ? "编辑文章" : "写文章"}</strong>}
         <div className="top-actions">
           {screen === "editor" ? <span className="save-state">{savedAt}</span> : (
-            <button className={`connection-pill ${connected ? "connected" : ""}`} onClick={connected ? () => loadPosts(tokenRef.current, blogId) : connectGoogle} disabled={busy}>
+            <button className={`connection-pill ${connected ? "connected" : ""}`} onClick={connected ? () => Promise.all([loadPosts(tokenRef.current, blogId), loadOnThisDay(tokenRef.current, blogId)]) : connectGoogle} disabled={busy}>
               <span className="connection-dot" />{connected ? "已连接" : "连接 Blogger"}
             </button>
           )}
@@ -389,6 +427,29 @@ export default function Home() {
             <div><p className="eyebrow">我的博客</p><h1>文章列表</h1></div>
             {posts.length > 0 && <span className="post-count">{posts.length} 篇</span>}
           </div>
+
+          <section className="memories" aria-labelledby="memories-title">
+            <div className="memories-heading">
+              <div><p className="eyebrow">时光回望</p><h2 id="memories-title">往年今日</h2></div>
+              <time>{today.toLocaleDateString("zh-CN", { month: "long", day: "numeric" })}</time>
+            </div>
+            <div className="memory-years">
+              {anniversaryYears.map((year) => {
+                const memories = onThisDayPosts[year] || [];
+                return (
+                  <div className="memory-row" key={year}>
+                    <strong>{year}</strong>
+                    <div className="memory-posts">
+                      {memories.map((post) => post.url ? (
+                        <a key={post.id} href={post.url} target="_blank" rel="noreferrer">{post.title || "未命名文章"}<span>↗</span></a>
+                      ) : <span key={post.id}>{post.title || "未命名文章"}</span>)}
+                      {memories.length === 0 && <span className="memory-empty" aria-label={`${year} 年今日没有日记`}>&nbsp;</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
           {posts.length > 0 ? (
             <div className="post-list">
@@ -480,7 +541,7 @@ export default function Home() {
             </div>
             <p className="sheet-copy">OAuth 客户端 ID 只保存在这台设备上；访问令牌不会保存。连接后会同步文章列表。</p>
             <label className="field-label">Google OAuth 客户端 ID<input value={clientId} onChange={(event) => setClientId(event.target.value)} placeholder="123456…apps.googleusercontent.com" inputMode="text" /></label>
-            {blogs.length > 0 && <label className="field-label">选择博客<select value={blogId} onChange={async (event) => { const selected = event.target.value; const selectedUrl = blogs.find((blog) => blog.id === selected)?.url || ""; setBlogId(selected); setBlogUrl(selectedUrl); saveConfig({ blogId: selected, blogUrl: selectedUrl }); if (tokenRef.current) await loadPosts(tokenRef.current, selected); }}>{blogs.map((blog) => <option key={blog.id} value={blog.id}>{blog.name}</option>)}</select></label>}
+            {blogs.length > 0 && <label className="field-label">选择博客<select value={blogId} onChange={async (event) => { const selected = event.target.value; const selectedUrl = blogs.find((blog) => blog.id === selected)?.url || ""; setBlogId(selected); setBlogUrl(selectedUrl); saveConfig({ blogId: selected, blogUrl: selectedUrl }); if (tokenRef.current) await Promise.all([loadPosts(tokenRef.current, selected), loadOnThisDay(tokenRef.current, selected)]); }}>{blogs.map((blog) => <option key={blog.id} value={blog.id}>{blog.name}</option>)}</select></label>}
             <button className="google-button" onClick={connectGoogle} disabled={busy}><span className="google-g">G</span>{connected ? "重新连接 Google" : "连接 Google 并同步文章"}</button>
             <a className="help-link" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer">前往 Google Cloud 设置 →</a>
             <div className="settings-divider" />

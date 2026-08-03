@@ -39,6 +39,19 @@ button { -webkit-tap-highlight-color: transparent; }
 .list-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 0 3px 22px; }
 .list-heading h1 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(34px, 9vw, 48px); line-height: 1.05; letter-spacing: -.7px; }
 .post-count { padding: 7px 10px; border-radius: 99px; color: var(--muted); background: #e9e2d6; font-size: 12px; }
+.memories { margin-bottom: 22px; overflow: hidden; border: 1px solid rgba(105,92,69,.13); border-radius: 18px; background: #ebe3d6; box-shadow: 0 8px 24px rgba(52,42,22,.045); }
+.memories-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; padding: 18px 19px 15px; }
+.memories-heading .eyebrow { margin-bottom: 5px; }
+.memories-heading h2 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 24px; }
+.memories-heading > time { color: var(--muted); font-size: 13px; }
+.memory-years { border-top: 1px solid rgba(105,92,69,.12); background: rgba(255,253,248,.76); }
+.memory-row { display: grid; grid-template-columns: 58px minmax(0, 1fr); min-height: 50px; padding: 0 18px; border-bottom: 1px solid rgba(105,92,69,.1); }
+.memory-row:last-child { border-bottom: 0; }
+.memory-row > strong { align-self: center; color: var(--accent); font-family: Georgia, serif; font-size: 15px; }
+.memory-posts { display: grid; align-content: center; min-width: 0; padding: 7px 0; }
+.memory-posts a, .memory-posts > span:not(.memory-empty) { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 5px 0; overflow: hidden; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 15px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.memory-posts a span { flex: 0 0 auto; color: var(--accent-dark); font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+.memory-empty { display: block; min-height: 24px; }
 .post-list { display: grid; gap: 11px; }
 .post-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 128px; padding: 20px; border: 1px solid rgba(105,92,69,.13); border-radius: 17px; background: var(--paper); box-shadow: 0 8px 24px rgba(52,42,22,.055); }
 .post-card-main { min-width: 0; }
