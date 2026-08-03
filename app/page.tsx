@@ -57,6 +57,11 @@ export default function Home() {
   const [connected, setConnected] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [onThisDayPosts, setOnThisDayPosts] = useState<Record<number, Post[]>>({});
+  const [searchText, setSearchText] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+  const [nextPageToken, setNextPageToken] = useState("");
+  const [pageTokens, setPageTokens] = useState<string[]>([""]);
+  const [pageIndex, setPageIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState("");
@@ -128,15 +133,60 @@ export default function Home() {
     localStorage.setItem(POSTS_KEY, JSON.stringify(unique));
   }
 
-  async function loadPosts(accessToken: string, selectedBlogId: string) {
+  async function loadPosts(accessToken: string, selectedBlogId: string, query = "", pageToken = "", resetPagination = true) {
     if (!selectedBlogId) return;
-    const response = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${selectedBlogId}/posts?maxResults=30&fetchBodies=false&orderBy=updated`, {
+    const params = new URLSearchParams({ maxResults: "30", fetchBodies: "false", orderBy: "updated", status: "live" });
+    if (query) params.set("q", query);
+    if (pageToken) params.set("pageToken", pageToken);
+    const response = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${selectedBlogId}/posts?${params}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!response.ok) throw new Error("无法读取文章列表，请重新连接 Google。");
     const data = await response.json();
     const remotePosts: Post[] = (data.items || []).map((post: Post) => ({ ...post, status: "live" }));
-    cachePosts(remotePosts);
+    setPosts(remotePosts);
+    if (!query && !pageToken) localStorage.setItem(POSTS_KEY, JSON.stringify(remotePosts));
+    setNextPageToken(data.nextPageToken || "");
+    if (resetPagination) {
+      setActiveSearch(query);
+      setSearchText(query);
+      setPageTokens([""]);
+      setPageIndex(0);
+    }
+  }
+
+  async function searchPosts(query: string) {
+    if (!connected || !tokenRef.current || !blogId) {
+      setSettingsOpen(true);
+      setNotice("请先连接 Blogger，再搜索文章。");
+      return;
+    }
+    setBusy(true);
+    try {
+      await loadPosts(tokenRef.current, blogId, query.trim());
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "搜索失败。");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changePage(direction: "next" | "previous") {
+    const targetIndex = direction === "next" ? pageIndex + 1 : pageIndex - 1;
+    if (targetIndex < 0) return;
+    const token = direction === "next" ? nextPageToken : pageTokens[targetIndex];
+    if (direction === "next" && !token) return;
+    setBusy(true);
+    try {
+      await loadPosts(tokenRef.current, blogId, activeSearch, token, false);
+      if (direction === "next") setPageTokens((current) => [...current.slice(0, targetIndex), token]);
+      setPageIndex(targetIndex);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "翻页失败。");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function loadOnThisDay(accessToken: string, selectedBlogId: string) {
@@ -412,7 +462,7 @@ export default function Home() {
         {screen === "editor" && <strong className="editor-heading">{editingPostId ? "编辑文章" : "写文章"}</strong>}
         <div className="top-actions">
           {screen === "editor" ? <span className="save-state">{savedAt}</span> : (
-            <button className={`connection-pill ${connected ? "connected" : ""}`} onClick={connected ? () => Promise.all([loadPosts(tokenRef.current, blogId), loadOnThisDay(tokenRef.current, blogId)]) : connectGoogle} disabled={busy}>
+            <button className={`connection-pill ${connected ? "connected" : ""}`} onClick={connected ? () => Promise.all([loadPosts(tokenRef.current, blogId, activeSearch), loadOnThisDay(tokenRef.current, blogId)]) : connectGoogle} disabled={busy}>
               <span className="connection-dot" />{connected ? "已连接" : "连接 Blogger"}
             </button>
           )}
@@ -425,8 +475,16 @@ export default function Home() {
         <section className="post-list-page">
           <div className="list-heading">
             <div><p className="eyebrow">我的博客</p><h1>文章列表</h1></div>
-            {posts.length > 0 && <span className="post-count">{posts.length} 篇</span>}
+            {posts.length > 0 && <span className="post-count">第 {pageIndex + 1} 页 · {posts.length} 篇</span>}
           </div>
+
+          <form className="post-search" onSubmit={(event) => { event.preventDefault(); searchPosts(searchText); }} role="search">
+            <span aria-hidden="true">⌕</span>
+            <input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="搜索所有文章" aria-label="搜索所有文章" enterKeyHint="search" />
+            {searchText && <button className="clear-search" type="button" onClick={() => { setSearchText(""); if (activeSearch) searchPosts(""); }} aria-label="清除搜索">×</button>}
+            <button className="search-button" type="submit" disabled={busy}>搜索</button>
+          </form>
+          {activeSearch && <p className="search-summary">正在搜索“{activeSearch}”</p>}
 
           <section className="memories" aria-labelledby="memories-title">
             <div className="memories-heading">
@@ -473,10 +531,18 @@ export default function Home() {
           ) : (
             <div className="empty-state">
               <div className="empty-paper"><span>文</span></div>
-              <h2>文章会出现在这里</h2>
-              <p>{connected ? "点击右下角的笔，开始写第一篇文章。" : "连接 Blogger 后同步已有文章，也可以直接开始写作。"}</p>
+              <h2>{activeSearch ? "没有找到文章" : "文章会出现在这里"}</h2>
+              <p>{activeSearch ? `没有包含“${activeSearch}”的文章。` : connected ? "点击右下角的笔，开始写第一篇文章。" : "连接 Blogger 后同步已有文章，也可以直接开始写作。"}</p>
               {!connected && <button className="inline-connect" onClick={connectGoogle}>连接 Blogger</button>}
             </div>
+          )}
+
+          {(pageIndex > 0 || nextPageToken) && (
+            <nav className="pagination" aria-label="文章翻页">
+              <button onClick={() => changePage("previous")} disabled={busy || pageIndex === 0}>← 上一页</button>
+              <span>第 {pageIndex + 1} 页</span>
+              <button onClick={() => changePage("next")} disabled={busy || !nextPageToken}>下一页 →</button>
+            </nav>
           )}
 
           {title || content ? <button className="draft-banner" onClick={startWriting}><span>本机草稿</span><strong>{title || "未命名草稿"}</strong><b>继续写 →</b></button> : null}
