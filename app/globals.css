@@ -32,6 +32,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .connection-pill { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 99px; color: #5c574e; background: rgba(255,253,248,.78); font-size: 12px; font-weight: 700; cursor: pointer; }
 .connection-dot { width: 7px; height: 7px; border-radius: 50%; background: #b5aea1; }
 .connection-pill.connected .connection-dot { background: #4e9c67; box-shadow: 0 0 0 3px rgba(78,156,103,.13); }
+.blog-button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 10px; color: var(--accent-dark); background: transparent; font-size: 12px; font-weight: 750; white-space: nowrap; cursor: pointer; }
+.blog-button:active { background: #e8e1d4; }
 
 .post-list-page { width: min(760px, 100%); margin: 0 auto; padding: 32px 16px calc(112px + env(safe-area-inset-bottom)); }
 .list-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 0 3px 22px; }
@@ -44,7 +46,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .status-badge { padding: 4px 7px; border-radius: 99px; color: #3e7650; background: #e4f1e8; font-weight: 750; }
 .status-badge.draft { color: #8a6431; background: #f3ead8; }
 .post-card h2 { margin: 0; overflow: hidden; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 22px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.post-card > a { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--accent-dark); background: #f1e8dc; text-decoration: none; font-size: 20px; }
+.post-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.post-actions > a, .edit-post-button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; color: var(--accent-dark); background: #f1e8dc; text-decoration: none; font-size: 20px; cursor: pointer; }
+.edit-post-button { color: #fff9ef; background: var(--accent); font-family: Georgia, serif; transform: scaleX(-1); }
+.edit-post-button:active, .post-actions > a:active { transform: scale(.95); }
 .card-labels { display: flex; gap: 6px; margin-top: 11px; overflow: hidden; }
 .card-labels span { flex: 0 0 auto; color: #82796b; font-size: 11px; }
 .card-labels span::before { content: "#"; color: #b7ac9a; }
@@ -73,6 +78,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .toolbar { position: sticky; top: 66px; z-index: 5; display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 8px 16px; border-block: 1px solid var(--line); background: rgba(255,253,248,.94); scrollbar-width: none; }
 .toolbar::-webkit-scrollbar { display: none; }
 .toolbar button { flex: 0 0 auto; width: 42px; height: 42px; border: 0; border-radius: 10px; color: #4d4941; background: transparent; font-size: 18px; cursor: pointer; }
+.toolbar .image-tool { width: auto; min-width: 76px; padding: 0 11px; color: var(--accent-dark); background: #f1e8dc; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; font-size: 13px; font-weight: 750; }
+.file-input { display: none; }
 .toolbar button:active { color: var(--accent); background: #f0e9dc; }
 .divider { flex: 0 0 auto; width: 1px; height: 24px; margin: 0 3px; background: var(--line); }
 .editor { min-height: calc(100dvh - 390px); padding: 22px 24px 38px; outline: 0; font-family: Georgia, "Songti SC", serif; font-size: 20px; line-height: 1.85; }
@@ -80,6 +87,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .editor h2, .preview-content h2 { margin: 1.6em 0 .5em; font-size: 1.35em; line-height: 1.35; }
 .editor blockquote, .preview-content blockquote { margin: 1.4em 0; padding: 3px 0 3px 18px; border-left: 3px solid var(--accent); color: #625c52; }
 .editor a, .preview-content a { color: var(--accent-dark); text-decoration-thickness: 1px; }
+.editor figure, .preview-content figure { margin: 1.6em 0; }
+.editor img, .preview-content img { display: block; width: 100%; height: auto; max-height: 720px; object-fit: contain; border-radius: 12px; background: #eee8dd; }
+.editor figcaption, .preview-content figcaption { min-height: 1.5em; margin-top: 7px; color: var(--muted); text-align: center; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; font-size: 13px; }
 .meta-row { display: flex; align-items: center; gap: 12px; padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); color: var(--muted); }
 .meta-row input { min-width: 0; flex: 1; height: 44px; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 16px; }
 .meta-row span { flex: 0 0 auto; font-size: 13px; }
@@ -114,6 +124,21 @@ button:disabled { opacity: .55; cursor: wait; }
 .google-button { width: 100%; margin-top: 8px; border: 1px solid #cfc9bd; color: #3f3c37; background: #fff; }
 .google-g { display: inline-grid; place-items: center; width: 25px; height: 25px; margin-right: 10px; border-radius: 50%; color: #fff; background: #4285f4; font-weight: 800; }
 .help-link { display: block; margin-top: 18px; color: var(--accent-dark); text-align: center; text-decoration: none; font-size: 14px; font-weight: 700; }
+.settings-divider { height: 1px; margin: 28px 0 24px; background: var(--line); }
+.settings-subtitle { margin: -5px 0 0; font-family: Georgia, "Songti SC", serif; font-size: 23px; }
+.cloud-save-button { width: 100%; min-height: 50px; margin-top: 6px; border: 1px solid var(--accent); border-radius: 13px; color: #fff; background: var(--accent); font-weight: 750; cursor: pointer; }
+
+@media (max-width: 430px) {
+  .topbar { padding-inline: 12px; }
+  .top-actions { gap: 3px; }
+  .connection-pill { padding-inline: 8px; }
+  .blog-button { padding-inline: 7px; }
+  .icon-button { width: 39px; }
+  .post-card { gap: 10px; padding: 17px; }
+  .post-card h2 { font-size: 20px; }
+  .post-actions { gap: 6px; }
+  .post-actions > a, .edit-post-button { width: 40px; height: 40px; }
+}
 
 @media (min-width: 700px) {
   .topbar { padding-inline: 28px; }
