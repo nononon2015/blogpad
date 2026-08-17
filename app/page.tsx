@@ -34,6 +34,7 @@ const DRAFT_KEY = "blogpad-draft-v1";
 const CONFIG_KEY = "blogpad-config-v1";
 const POSTS_KEY = "blogpad-posts-v1";
 const MEMORIES_KEY_PREFIX = "blogpad-on-this-day-v1-";
+const COMMON_LABELS = ["操盘日记", "工作总结", "ai的回答", "读书心得"];
 const MAX_PHOTOS_PER_UPLOAD = 18;
 const PHOTO_UPLOAD_CONCURRENCY = 3;
 
@@ -430,6 +431,14 @@ export default function Home() {
     setContent(editorRef.current?.innerHTML || "");
   }
 
+  function toggleCommonLabel(label: string) {
+    const currentLabels = labels.split(/[,，]/).map((item) => item.trim()).filter(Boolean);
+    const nextLabels = currentLabels.includes(label)
+      ? currentLabels.filter((item) => item !== label)
+      : [...currentLabels, label];
+    setLabels(nextLabels.join("，"));
+  }
+
   async function sendToBlogger(isDraft: boolean) {
     if (!connected || !tokenRef.current || !blogId) {
       setSettingsOpen(true);
@@ -606,8 +615,16 @@ export default function Home() {
                 </div>
                 <div ref={editorRef} className="editor" contentEditable suppressContentEditableWarning data-placeholder="从这里开始写……" onInput={(event) => setContent(event.currentTarget.innerHTML)} />
                 <div className="meta-row">
-                  <input value={labels} onChange={(event) => setLabels(event.target.value)} placeholder="标签（用逗号分隔）" aria-label="文章标签" />
-                  <span>{wordCount} 字</span>
+                  <div className="label-editor">
+                    <div className="quick-labels" aria-label="常用标签">
+                      {COMMON_LABELS.map((label) => {
+                        const selected = labels.split(/[,，]/).map((item) => item.trim()).includes(label);
+                        return <button type="button" key={label} className={selected ? "selected" : ""} aria-pressed={selected} onClick={() => toggleCommonLabel(label)}>#{label}</button>;
+                      })}
+                    </div>
+                    <input value={labels} onChange={(event) => setLabels(event.target.value)} placeholder="也可以输入其他标签（用逗号分隔）" aria-label="文章标签" />
+                  </div>
+                  <span className="word-count">{wordCount} 字</span>
                 </div>
               </article>
             ) : (

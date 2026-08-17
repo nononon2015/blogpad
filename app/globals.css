@@ -114,9 +114,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .editor figure, .preview-content figure { margin: 1.6em 0; }
 .editor img, .preview-content img { display: block; width: 100%; height: auto; max-height: 720px; object-fit: contain; border-radius: 12px; background: #eee8dd; }
 .editor figcaption, .preview-content figcaption { min-height: 1.5em; margin-top: 7px; color: var(--muted); text-align: center; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; font-size: 13px; }
-.meta-row { display: flex; align-items: center; gap: 12px; padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); color: var(--muted); }
-.meta-row input { min-width: 0; flex: 1; height: 44px; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 16px; }
-.meta-row span { flex: 0 0 auto; font-size: 13px; }
+.meta-row { display: flex; align-items: flex-end; gap: 12px; padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); color: var(--muted); }
+.label-editor { min-width: 0; flex: 1; }
+.quick-labels { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 6px; }
+.quick-labels button { min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 99px; color: #70695e; background: #f5f0e7; font-size: 12px; font-weight: 700; cursor: pointer; }
+.quick-labels button.selected { border-color: var(--accent); color: #fff; background: var(--accent); box-shadow: 0 4px 10px rgba(168,61,29,.16); }
+.label-editor input { width: 100%; min-width: 0; height: 44px; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 16px; }
+.word-count { flex: 0 0 auto; padding-bottom: 14px; font-size: 13px; white-space: nowrap; }
 
 .preview-paper { padding: clamp(28px, 7vw, 64px); }
 .preview-kicker, .eyebrow { margin: 0 0 12px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 1.6px; }
