@@ -11,17 +11,17 @@
 }
 
 * { box-sizing: border-box; }
-html { background: var(--canvas); }
-body { margin: 0; color: var(--ink); background: var(--canvas); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Noto Sans CJK SC", sans-serif; }
+html { max-width: 100%; overflow-x: hidden; background: var(--canvas); }
+body { width: 100%; max-width: 100%; margin: 0; overflow-x: hidden; color: var(--ink); background: var(--canvas); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Noto Sans CJK SC", sans-serif; }
 button, input, textarea, select { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 
-.app-shell { min-height: 100dvh; }
+.app-shell { width: 100%; max-width: 100%; min-height: 100dvh; overflow-x: hidden; overflow-x: clip; }
 .editor-screen { padding-bottom: 98px; }
-.topbar { position: sticky; top: 0; z-index: 20; height: 66px; display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 18px 0; background: color-mix(in srgb, var(--canvas) 92%, transparent); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(65, 57, 42, .09); }
-.brand { display: flex; align-items: center; gap: 10px; font-family: Georgia, "Songti SC", serif; font-weight: 700; font-size: 21px; letter-spacing: -.3px; }
+.topbar { position: sticky; top: 0; z-index: 20; width: 100%; min-width: 0; height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: env(safe-area-inset-top) 18px 0; overflow: hidden; background: color-mix(in srgb, var(--canvas) 92%, transparent); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(65, 57, 42, .09); }
+.brand { display: flex; min-width: 0; flex: 0 1 auto; align-items: center; gap: 10px; font-family: Georgia, "Songti SC", serif; font-weight: 700; font-size: 21px; letter-spacing: -.3px; }
 .brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px 10px 10px 3px; color: #fff9ef; background: var(--accent); font-family: Georgia, serif; font-size: 19px; box-shadow: 0 4px 12px rgba(168,61,29,.2); }
-.top-actions { display: flex; align-items: center; gap: 9px; }
+.top-actions { display: flex; min-width: 0; flex: 0 1 auto; align-items: center; justify-content: flex-end; gap: 9px; }
 .save-state { color: var(--muted); font-size: 12px; }
 .icon-button, .close-button { border: 0; background: transparent; color: var(--ink); cursor: pointer; }
 .icon-button { width: 44px; height: 44px; border-radius: 50%; font-size: 20px; }
@@ -29,13 +29,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .back-button { width: 44px; height: 44px; margin-left: -7px; border: 0; border-radius: 50%; color: var(--ink); background: transparent; font-family: Georgia, serif; font-size: 42px; font-weight: 300; line-height: 1; cursor: pointer; }
 .back-button:active { background: #e8e1d4; }
 .editor-heading { position: absolute; left: 50%; transform: translateX(-50%); font-family: Georgia, "Songti SC", serif; font-size: 17px; }
-.connection-pill { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 99px; color: #5c574e; background: rgba(255,253,248,.78); font-size: 12px; font-weight: 700; cursor: pointer; }
+.connection-pill { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 99px; color: #5c574e; background: rgba(255,253,248,.78); font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .connection-dot { width: 7px; height: 7px; border-radius: 50%; background: #b5aea1; }
 .connection-pill.connected .connection-dot { background: #4e9c67; box-shadow: 0 0 0 3px rgba(78,156,103,.13); }
 .blog-button { min-height: 36px; padding: 0 10px; border: 0; border-radius: 10px; color: var(--accent-dark); background: transparent; font-size: 12px; font-weight: 750; white-space: nowrap; cursor: pointer; }
 .blog-button:active { background: #e8e1d4; }
 
-.post-list-page { width: min(760px, 100%); margin: 0 auto; padding: 32px 16px calc(112px + env(safe-area-inset-bottom)); }
+.post-list-page { width: min(760px, 100%); max-width: 100%; min-width: 0; margin: 0 auto; padding: 32px 16px calc(112px + env(safe-area-inset-bottom)); overflow-x: hidden; }
 .list-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 0 3px 22px; }
 .list-heading h1 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(34px, 9vw, 48px); line-height: 1.05; letter-spacing: -.7px; }
 .post-count { padding: 7px 10px; border-radius: 99px; color: var(--muted); background: #e9e2d6; font-size: 12px; }
@@ -64,8 +64,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .pagination button { min-height: 46px; padding: 0 15px; border: 1px solid var(--line); border-radius: 13px; color: var(--accent-dark); background: var(--paper); font-weight: 750; cursor: pointer; }
 .pagination button:last-child { justify-self: stretch; }
 .pagination span { color: var(--muted); font-size: 13px; white-space: nowrap; }
-.post-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 128px; padding: 20px; border: 1px solid rgba(105,92,69,.13); border-radius: 17px; background: var(--paper); box-shadow: 0 8px 24px rgba(52,42,22,.055); }
-.post-card-main { min-width: 0; }
+.post-card { display: flex; width: 100%; min-width: 0; align-items: center; justify-content: space-between; gap: 18px; min-height: 128px; padding: 20px; overflow: hidden; border: 1px solid rgba(105,92,69,.13); border-radius: 17px; background: var(--paper); box-shadow: 0 8px 24px rgba(52,42,22,.055); }
+.post-card-main { width: 0; min-width: 0; flex: 1 1 0; }
 .post-meta { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; color: var(--muted); font-size: 11px; }
 .status-badge { padding: 4px 7px; border-radius: 99px; color: #3e7650; background: #e4f1e8; font-weight: 750; }
 .status-badge.draft { color: #8a6431; background: #f3ead8; }
@@ -153,17 +153,27 @@ button:disabled { opacity: .55; cursor: wait; }
 .cloud-save-button { width: 100%; min-height: 50px; margin-top: 6px; border: 1px solid var(--accent); border-radius: 13px; color: #fff; background: var(--accent); font-weight: 750; cursor: pointer; }
 
 @media (max-width: 430px) {
-  .topbar { padding-inline: 12px; }
+  .topbar { gap: 5px; padding-inline: 10px; }
+  .brand { flex: 0 0 auto; }
+  .brand > span:last-child { display: none; }
   .top-actions { gap: 3px; }
   .connection-pill { padding-inline: 8px; }
   .blog-button { padding-inline: 7px; }
   .icon-button { width: 39px; }
-  .post-card { gap: 10px; padding: 17px; }
+  .post-list-page { padding-inline: 12px; }
+  .post-card { gap: 9px; padding: 15px 14px; }
   .post-card h2 { font-size: 20px; }
-  .post-actions { gap: 6px; }
-  .post-actions > a, .edit-post-button { width: 40px; height: 40px; }
+  .post-actions { flex-direction: column; gap: 5px; }
+  .post-actions > a, .edit-post-button { width: 38px; height: 38px; }
   .post-search { grid-template-columns: auto minmax(0, 1fr) auto auto; padding-left: 12px; }
   .search-button { padding-inline: 12px; }
+}
+
+@media (max-width: 350px) {
+  .connection-pill { width: 36px; padding: 0; justify-content: center; overflow: hidden; font-size: 0; }
+  .connection-dot { flex: 0 0 auto; }
+  .blog-button { font-size: 11px; }
+  .post-card { padding-inline: 12px; }
 }
 
 @media (min-width: 700px) {
