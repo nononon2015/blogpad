@@ -34,6 +34,8 @@ const DRAFT_KEY = "blogpad-draft-v1";
 const CONFIG_KEY = "blogpad-config-v1";
 const POSTS_KEY = "blogpad-posts-v1";
 const MEMORIES_KEY_PREFIX = "blogpad-on-this-day-v1-";
+const MAX_PHOTOS_PER_UPLOAD = 18;
+const PHOTO_UPLOAD_CONCURRENCY = 3;
 
 export default function Home() {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -327,15 +329,17 @@ export default function Home() {
     if (selection?.rangeCount) selectionRef.current = selection.getRangeAt(0).cloneRange();
   }
 
-  function insertImage(url: string, alt: string) {
+  function insertImages(images: Array<{ url: string; alt: string }>) {
+    if (images.length === 0) return;
     editorRef.current?.focus();
     const selection = window.getSelection();
     if (selectionRef.current && selection) {
       selection.removeAllRanges();
       selection.addRange(selectionRef.current);
     }
-    const safeAlt = alt.replace(/[&<>"']/g, "");
-    document.execCommand("insertHTML", false, `<figure><img src="${url}" alt="${safeAlt}" loading="lazy"><figcaption></figcaption></figure><p><br></p>`);
+    const escapeAttribute = (value: string) => value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = images.map(({ url, alt }) => `<figure><img src="${escapeAttribute(url)}" alt="${escapeAttribute(alt)}" loading="lazy"><figcaption></figcaption></figure>`).join("") + "<p><br></p>";
+    document.execCommand("insertHTML", false, html);
     setContent(editorRef.current?.innerHTML || "");
   }
 
@@ -362,27 +366,58 @@ export default function Home() {
     }
   }
 
-  async function uploadImage(file: File) {
+  async function uploadSingleImage(file: File): Promise<{ url: string; alt: string }> {
+    const compressed = await compressImage(file);
+    const form = new FormData();
+    form.append("file", compressed, `${file.name.replace(/\.[^.]+$/, "") || "photo"}.jpg`);
+    form.append("upload_preset", uploadPreset.trim());
+    form.append("folder", "blogpad");
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName.trim())}/image/upload`, { method: "POST", body: form });
+    const data = await response.json();
+    if (!response.ok || !data.secure_url) throw new Error(data?.error?.message || "照片上传失败，请检查 Cloudinary 设置。");
+    return { url: data.secure_url, alt: file.name };
+  }
+
+  async function uploadImages(files: File[]) {
+    if (files.length === 0) return;
+    const selectedFiles = files.slice(0, MAX_PHOTOS_PER_UPLOAD);
+    const wasLimited = files.length > MAX_PHOTOS_PER_UPLOAD;
     if (!cloudName.trim() || !uploadPreset.trim()) {
       setSettingsOpen(true);
       setNotice("请先在设置中填写 Cloudinary Cloud Name 和 Upload Preset。");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     setUploading(true);
-    setNotice("正在压缩并上传照片…");
+    setNotice(wasLimited ? `已选择 ${files.length} 张，只处理前 ${MAX_PHOTOS_PER_UPLOAD} 张。正在处理 0/${selectedFiles.length}…` : `正在处理 0/${selectedFiles.length} 张照片…`);
+    const uploaded: Array<{ url: string; alt: string } | undefined> = new Array(selectedFiles.length);
+    let completed = 0;
+    let failed = 0;
     try {
-      const compressed = await compressImage(file);
-      const form = new FormData();
-      form.append("file", compressed, `${file.name.replace(/\.[^.]+$/, "") || "photo"}.jpg`);
-      form.append("upload_preset", uploadPreset.trim());
-      form.append("folder", "blogpad");
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName.trim())}/image/upload`, { method: "POST", body: form });
-      const data = await response.json();
-      if (!response.ok || !data.secure_url) throw new Error(data?.error?.message || "照片上传失败，请检查 Cloudinary 设置。");
-      insertImage(data.secure_url, file.name);
-      setNotice("照片已插入文章。");
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "照片上传失败。");
+      let nextIndex = 0;
+      const worker = async () => {
+        while (nextIndex < selectedFiles.length) {
+          const index = nextIndex++;
+          try {
+            uploaded[index] = await uploadSingleImage(selectedFiles[index]);
+          } catch {
+            failed += 1;
+          } finally {
+            completed += 1;
+            setNotice(`正在处理 ${completed}/${selectedFiles.length} 张照片…`);
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(PHOTO_UPLOAD_CONCURRENCY, selectedFiles.length) }, () => worker()));
+      const successful = uploaded.filter((image): image is { url: string; alt: string } => Boolean(image));
+      insertImages(successful);
+      if (failed === 0) {
+        setNotice(wasLimited ? `已插入前 ${successful.length} 张照片（一次最多 ${MAX_PHOTOS_PER_UPLOAD} 张）。` : `${successful.length} 张照片已插入文章。`);
+      } else if (successful.length > 0) {
+        setNotice(`已插入 ${successful.length} 张照片，${failed} 张上传失败。`);
+      } else {
+        setNotice("照片上传失败，请检查网络或 Cloudinary 设置后重试。");
+      }
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -566,8 +601,8 @@ export default function Home() {
                   <button onClick={() => format("insertUnorderedList")} aria-label="项目列表">☷</button>
                   <button onClick={() => format("formatBlock", "blockquote")} aria-label="引用">❝</button>
                   <button onClick={() => { const url = prompt("请输入链接地址"); if (url) format("createLink", url); }} aria-label="插入链接">↗</button>
-                  <button className="image-tool" onClick={() => { rememberSelection(); fileInputRef.current?.click(); }} disabled={uploading} aria-label="从手机插入照片">{uploading ? "上传中…" : "▧ 照片"}</button>
-                  <input ref={fileInputRef} className="file-input" type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadImage(file); }} />
+                  <button className="image-tool" onClick={() => { rememberSelection(); fileInputRef.current?.click(); }} disabled={uploading} aria-label={`从手机插入照片，一次最多 ${MAX_PHOTOS_PER_UPLOAD} 张`} title={`一次最多添加 ${MAX_PHOTOS_PER_UPLOAD} 张照片`}>{uploading ? "上传中…" : "▧ 照片"}</button>
+                  <input ref={fileInputRef} className="file-input" type="file" accept="image/*" multiple onChange={(event) => uploadImages(Array.from(event.target.files || []))} />
                 </div>
                 <div ref={editorRef} className="editor" contentEditable suppressContentEditableWarning data-placeholder="从这里开始写……" onInput={(event) => setContent(event.currentTarget.innerHTML)} />
                 <div className="meta-row">
