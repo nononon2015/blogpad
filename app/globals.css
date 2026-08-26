@@ -69,6 +69,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .post-meta { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; color: var(--muted); font-size: 11px; }
 .status-badge { padding: 4px 7px; border-radius: 99px; color: #3e7650; background: #e4f1e8; font-weight: 750; }
 .status-badge.draft { color: #8a6431; background: #f3ead8; }
+.status-badge.scheduled { color: #7253a2; background: #eee7f7; }
 .post-card h2 { margin: 0; overflow: hidden; color: var(--ink); font-family: Georgia, "Songti SC", serif; font-size: 22px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .post-actions { display: flex; flex: 0 0 auto; gap: 8px; }
 .post-actions > a, .edit-post-button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; color: var(--accent-dark); background: #f1e8dc; text-decoration: none; font-size: 20px; cursor: pointer; }
@@ -130,10 +131,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .preview-content { font-family: Georgia, "Songti SC", serif; font-size: 20px; line-height: 1.85; }
 
 .publish-bar { position: fixed; inset: auto 0 0; z-index: 25; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr); gap: 10px; padding: 11px max(14px, calc((100vw - 792px)/2)) calc(11px + env(safe-area-inset-bottom)); background: rgba(255,253,248,.93); backdrop-filter: blur(20px); border-top: 1px solid rgba(79,67,47,.12); }
+.publish-bar.has-schedule { grid-template-columns: minmax(0, .82fr) minmax(82px, .9fr) minmax(0, 1.08fr); }
 .publish-bar button, .google-button { min-height: 52px; border-radius: 14px; font-weight: 750; cursor: pointer; }
 .secondary { border: 1px solid var(--line); color: #4f4a42; background: #fff; }
 .primary { border: 1px solid var(--accent); color: #fff; background: var(--accent); box-shadow: 0 8px 18px rgba(168,61,29,.22); }
 .primary:active { background: var(--accent-dark); }
+.schedule-button { min-width: 0; padding: 0 8px; overflow: hidden; border: 1px solid #cdbfa9; color: #6e6252; background: #f5eee3; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.schedule-button.scheduled { border-color: #8e6eb9; color: #65458f; background: #eee7f7; }
 button:disabled { opacity: .55; cursor: wait; }
 
 .notice { position: fixed; z-index: 40; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100% - 28px); padding: 13px 14px 13px 17px; transform: translateX(-50%); border-radius: 14px; color: #fff; background: #282722; box-shadow: 0 12px 32px rgba(0,0,0,.24); font-size: 14px; }
@@ -141,6 +145,7 @@ button:disabled { opacity: .55; cursor: wait; }
 
 .sheet-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; padding-top: 50px; background: rgba(34,31,26,.4); backdrop-filter: blur(3px); }
 .settings-sheet { width: min(620px, 100%); max-height: 92dvh; overflow-y: auto; padding: 10px 22px calc(26px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: var(--paper); box-shadow: 0 -20px 60px rgba(22,19,14,.22); }
+.schedule-sheet { width: min(520px, 100%); padding: 10px 22px calc(24px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: var(--paper); box-shadow: 0 -20px 60px rgba(22,19,14,.22); }
 .sheet-handle { width: 42px; height: 5px; margin: 0 auto 18px; border-radius: 99px; background: #d8d1c5; }
 .sheet-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .sheet-heading h2 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 27px; }
@@ -155,6 +160,13 @@ button:disabled { opacity: .55; cursor: wait; }
 .settings-divider { height: 1px; margin: 28px 0 24px; background: var(--line); }
 .settings-subtitle { margin: -5px 0 0; font-family: Georgia, "Songti SC", serif; font-size: 23px; }
 .cloud-save-button { width: 100%; min-height: 50px; margin-top: 6px; border: 1px solid var(--accent); border-radius: 13px; color: #fff; background: var(--accent); font-weight: 750; cursor: pointer; }
+.schedule-copy { margin: 14px 0 18px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.schedule-fields { display: grid; gap: 13px; }
+.schedule-fields label { display: grid; gap: 8px; color: #565149; font-size: 13px; font-weight: 700; }
+.schedule-fields input { width: 100%; min-height: 54px; padding: 0 14px; border: 1px solid var(--line); border-radius: 13px; outline: 0; color: var(--ink); background: #fff; font-size: 17px; }
+.schedule-fields input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(204,79,39,.12); }
+.schedule-actions { display: grid; grid-template-columns: 1fr 1.15fr; gap: 10px; margin-top: 20px; }
+.schedule-actions button { min-height: 52px; border-radius: 14px; font-weight: 750; cursor: pointer; }
 
 @media (max-width: 430px) {
   .topbar { gap: 5px; padding-inline: 10px; }
@@ -171,6 +183,8 @@ button:disabled { opacity: .55; cursor: wait; }
   .post-actions > a, .edit-post-button { width: 38px; height: 38px; }
   .post-search { grid-template-columns: auto minmax(0, 1fr) auto auto; padding-left: 12px; }
   .search-button { padding-inline: 12px; }
+  .publish-bar.has-schedule { gap: 7px; padding-inline: 10px; }
+  .publish-bar.has-schedule button { font-size: 13px; }
 }
 
 @media (max-width: 350px) {
@@ -178,16 +192,18 @@ button:disabled { opacity: .55; cursor: wait; }
   .connection-dot { flex: 0 0 auto; }
   .blog-button { font-size: 11px; }
   .post-card { padding-inline: 12px; }
+  .publish-bar.has-schedule { grid-template-columns: minmax(0, .75fr) minmax(76px, .9fr) minmax(0, 1fr); padding-inline: 8px; }
+  .publish-bar.has-schedule button { font-size: 12px; }
 }
 
 @media (min-width: 700px) {
   .topbar { padding-inline: 28px; }
   .workspace { padding-top: 28px; }
-  .settings-sheet { margin-bottom: 20px; border-radius: 24px; }
+  .settings-sheet, .schedule-sheet { margin-bottom: 20px; border-radius: 24px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .settings-sheet { animation: rise .28s ease-out; }
+  .settings-sheet, .schedule-sheet { animation: rise .28s ease-out; }
   .notice { animation: pop .2s ease-out; }
   @keyframes rise { from { transform: translateY(20px); opacity: .6; } }
   @keyframes pop { from { transform: translate(-50%, 8px); opacity: 0; } }
