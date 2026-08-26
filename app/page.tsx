@@ -471,8 +471,8 @@ export default function Home() {
   }
 
   function openSchedulePicker() {
-    const suggested = new Date(Date.now() + 10 * 60 * 1000);
-    suggested.setMinutes(Math.ceil(suggested.getMinutes() / 5) * 5, 0, 0);
+    const suggested = new Date();
+    suggested.setSeconds(0, 0);
     setScheduleDraftDate(scheduleDate || formatDateInput(suggested));
     setScheduleDraftTime(scheduleTime || formatTimeInput(suggested));
     setScheduleOpen(true);
@@ -484,14 +484,14 @@ export default function Home() {
       setNotice("请选择完整的日期和时间。");
       return;
     }
-    if (scheduled.getTime() <= Date.now()) {
-      setNotice("定时发布时间必须晚于当前时间。");
+    if (scheduled.getTime() > Date.now()) {
+      setNotice("日记的发布时间不能晚于当前时间。");
       return;
     }
     setScheduleDate(scheduleDraftDate);
     setScheduleTime(scheduleDraftTime);
     setScheduleOpen(false);
-    setNotice(`已设定 ${scheduled.toLocaleString("zh-CN", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })} 发布。`);
+    setNotice(`文章发布时间已设为 ${scheduled.toLocaleString("zh-CN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}。`);
   }
 
   function clearSchedule() {
@@ -500,7 +500,7 @@ export default function Home() {
     setScheduleDraftDate("");
     setScheduleDraftTime("");
     setScheduleOpen(false);
-    setNotice("已改为立即发布。");
+    setNotice("已改为使用当前真实时间发布。");
   }
 
   async function sendToBlogger(isDraft: boolean) {
@@ -515,12 +515,12 @@ export default function Home() {
     }
     const scheduledFor = !isDraft && !editingPostId ? parseScheduledDate(scheduleDate, scheduleTime) : null;
     if (!isDraft && !editingPostId && (scheduleDate || scheduleTime) && !scheduledFor) {
-      setNotice("定时发布需要同时选择日期和时间。");
+      setNotice("指定发布时间需要同时选择日期和时间。");
       openSchedulePicker();
       return;
     }
-    if (scheduledFor && scheduledFor.getTime() <= Date.now()) {
-      setNotice("设定的发布时间已经过去，请重新选择。");
+    if (scheduledFor && scheduledFor.getTime() > Date.now()) {
+      setNotice("发布时间只能选择当前或过去的时间。");
       openSchedulePicker();
       return;
     }
@@ -542,7 +542,7 @@ export default function Home() {
           headers: { Authorization: `Bearer ${tokenRef.current}`, "Content-Type": "application/json" },
           body: JSON.stringify(postBody),
         });
-        if (!draftResponse.ok) throw new Error("无法创建定时文章，请重新连接 Google 后再试。");
+        if (!draftResponse.ok) throw new Error("无法创建文章，请重新连接 Google 后再试。");
         const draftPost: Post = await draftResponse.json();
         const publishParams = new URLSearchParams({ publishDate: scheduledFor.toISOString() });
         const publishResponse = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${blogId}/posts/${draftPost.id}/publish?${publishParams}`, {
@@ -551,7 +551,7 @@ export default function Home() {
         });
         if (!publishResponse.ok) {
           cachePosts([{ ...draftPost, status: "draft" }, ...posts.filter((post) => post.id !== draftPost.id)]);
-          throw new Error("文章已保存到 Blogger 草稿箱，但定时设置失败，请稍后重试。");
+          throw new Error("文章已保存到 Blogger 草稿箱，但发布时间设置失败，请稍后重试。");
         }
         publishedPost = await publishResponse.json();
       } else {
@@ -567,7 +567,7 @@ export default function Home() {
         if (!response.ok) throw new Error("发送失败，请重新连接 Google 后再试。");
         publishedPost = await response.json();
       }
-      const nextPost = { ...publishedPost, status: isDraft ? "draft" as const : scheduledFor ? "scheduled" as const : "live" as const };
+      const nextPost = { ...publishedPost, status: isDraft ? "draft" as const : "live" as const };
       cachePosts([nextPost, ...posts.filter((post) => post.id !== publishedPost.id)]);
       if (isDraft) {
         setNotice("已保存到 Blogger 草稿箱。");
@@ -580,7 +580,7 @@ export default function Home() {
         setScheduleTime("");
         setEditingPostId("");
         setScreen("list");
-        setNotice(editingPostId ? "文章修改成功，已回到列表。" : scheduledFor ? `文章将在 ${scheduledFor.toLocaleString("zh-CN", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })} 发布。` : "文章发布成功，已回到文章列表。");
+        setNotice(editingPostId ? "文章修改成功，已回到列表。" : scheduledFor ? `文章已按 ${scheduledFor.toLocaleString("zh-CN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })} 的时间发布。` : "文章发布成功，已回到文章列表。");
       }
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "发送失败。");
@@ -742,10 +742,10 @@ export default function Home() {
             ) : (
               <>
                 <button className="secondary" disabled={busy} onClick={() => sendToBlogger(true)}>存草稿</button>
-                <button className={`schedule-button ${scheduledDateTime ? "scheduled" : ""}`} disabled={busy} onClick={openSchedulePicker} aria-label={scheduledDateTime ? `已设定 ${scheduledDateTime.toLocaleString("zh-CN")} 发布，点击修改` : "设定发布时间"}>{scheduledDateTime ? `${scheduledDateTime.getMonth() + 1}/${scheduledDateTime.getDate()} ${scheduleTime}` : "▣ 定时"}</button>
+                <button className={`schedule-button ${scheduledDateTime ? "scheduled" : ""}`} disabled={busy} onClick={openSchedulePicker} aria-label={scheduledDateTime ? `文章发布时间为 ${scheduledDateTime.toLocaleString("zh-CN")}，点击修改` : "设定发布时间"}>{scheduledDateTime ? `${scheduledDateTime.getMonth() + 1}/${scheduledDateTime.getDate()} ${scheduleTime}` : "▣ 发布时间"}</button>
               </>
             )}
-            <button className="primary" disabled={busy || uploading} onClick={() => sendToBlogger(false)}>{busy ? "处理中…" : editingPostId ? "更新文章" : scheduledDateTime ? "定时发布" : "发布文章"}</button>
+            <button className="primary" disabled={busy || uploading} onClick={() => sendToBlogger(false)}>{busy ? "处理中…" : editingPostId ? "更新文章" : scheduledDateTime ? "按此时间发布" : "发布文章"}</button>
           </footer>
         </>
       )}
@@ -757,17 +757,17 @@ export default function Home() {
           <section className="schedule-sheet" onMouseDown={(event) => event.stopPropagation()} aria-modal="true" role="dialog" aria-labelledby="schedule-title">
             <div className="sheet-handle" />
             <div className="sheet-heading">
-              <div><p className="eyebrow">定时发布</p><h2 id="schedule-title">选择发布日期和时间</h2></div>
+              <div><p className="eyebrow">补写日记</p><h2 id="schedule-title">选择文章的发布时间</h2></div>
               <button className="close-button" onClick={() => setScheduleOpen(false)} aria-label="关闭">×</button>
             </div>
-            <p className="schedule-copy">不设定时间时，文章会按真实的当前时间立即发布。</p>
+            <p className="schedule-copy">适合补写过去的日记。请选择今天或过去的日期和时间；不设置时使用真实的当前时间。</p>
             <div className="schedule-fields">
-              <label>选择日期<input type="date" min={formatDateInput(new Date())} value={scheduleDraftDate} onChange={(event) => setScheduleDraftDate(event.target.value)} /></label>
+              <label>选择日期<input type="date" max={formatDateInput(new Date())} value={scheduleDraftDate} onChange={(event) => setScheduleDraftDate(event.target.value)} /></label>
               <label>选择时间<input type="time" step="60" value={scheduleDraftTime} onChange={(event) => setScheduleDraftTime(event.target.value)} /></label>
             </div>
             <div className="schedule-actions">
-              <button className="secondary" onClick={clearSchedule}>不设时间</button>
-              <button className="primary" onClick={confirmSchedule}>确定时间</button>
+              <button className="secondary" onClick={clearSchedule}>使用当前时间</button>
+              <button className="primary" onClick={confirmSchedule}>确定发布时间</button>
             </div>
           </section>
         </div>
